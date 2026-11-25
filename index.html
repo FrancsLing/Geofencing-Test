@@ -4,349 +4,39 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7f2">
-  <meta name="description" content="Check whether your current location is within 30 meters of the saved point.">
+  <meta name="description" content="Choose a location and radius, then check whether you are inside the geofence.">
   <title>Nearby Check</title>
-  <style>
-    /* Base & Layout */
-    :root {
-      color-scheme: light;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #17312a;
-      background: #f4f7f2;
-      font-synthesis: none;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      min-height: 100svh;
-      display: grid;
-      place-items: center;
-      padding: 20px;
-    }
-
-    main {
-      width: min(100%, 460px);
-      padding: clamp(24px, 7vw, 36px);
-      border: 1px solid #dce6dc;
-      border-radius: 24px;
-      background: #fff;
-      box-shadow: 0 20px 60px #23483212;
-    }
-
-    /* Header */
-    .mark {
-      width: 48px;
-      height: 48px;
-      display: grid;
-      place-items: center;
-      border-radius: 16px;
-      background: #e9f5e9;
-      color: #287348;
-      font-size: 26px;
-    }
-
-    h1 {
-      margin: 22px 0 8px;
-      font-size: clamp(28px, 7vw, 36px);
-      letter-spacing: -0.04em;
-    }
-
-    .intro {
-      margin: 0;
-      color: #64756c;
-      line-height: 1.55;
-    }
-
-    /* Target Card */
-    .target {
-      margin: 26px 0 18px;
-      padding: 16px;
-      border-radius: 14px;
-      background: #f5f8f4;
-    }
-
-    .target-label {
-      display: block;
-      margin-bottom: 6px;
-      color: #64756c;
-      font-size: 13px;
-    }
-
-    .coordinates {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      color: #27483a;
-      font-size: 14px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .map-link {
-      flex: none;
-      color: #237447;
-      font-size: 13px;
-      font-weight: 650;
-      text-decoration: none;
-    }
-
-    .map-link:hover {
-      text-decoration: underline;
-    }
-
-    /* Button */
-    button {
-      width: 100%;
-      min-height: 52px;
-      border: 0;
-      border-radius: 14px;
-      padding: 14px 18px;
-      background: #237447;
-      color: white;
-      font: inherit;
-      font-weight: 650;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.15s;
-      touch-action: manipulation;
-    }
-
-    button:hover {
-      background: #195f39;
-    }
-
-    button:active {
-      transform: scale(0.99);
-    }
-
-    button:focus-visible,
-    a:focus-visible {
-      outline: 3px solid #9ad2a8;
-      outline-offset: 3px;
-    }
-
-    button:disabled {
-      opacity: 0.65;
-      cursor: wait;
-    }
-
-    /* Result Status Box */
-    #result {
-      min-height: 88px;
-      margin-top: 18px;
-      padding: 16px;
-      border-radius: 14px;
-      background: #f5f8f4;
-      color: #64756c;
-      line-height: 1.5;
-    }
-
-    #result strong {
-      display: block;
-      margin-bottom: 3px;
-      color: #27483a;
-      font-size: 17px;
-    }
-
-    #result.near {
-      background: #e9f5e9;
-      color: #34744b;
-    }
-
-    #result.near strong {
-      color: #176737;
-    }
-
-    #result.far {
-      background: #fff4e7;
-      color: #8a6330;
-    }
-
-    #result.far strong {
-      color: #85551b;
-    }
-
-    #result.uncertain {
-      background: #fff8e8;
-      color: #80652d;
-    }
-
-    #result.uncertain strong {
-      color: #725719;
-    }
-
-    /* Footer Note */
-    .note {
-      margin: 18px 0 0;
-      color: #718078;
-      font-size: 12px;
-      line-height: 1.5;
-      text-align: center;
-    }
-  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 <body>
   <main>
     <div class="mark" aria-hidden="true">⌖</div>
     <h1>Nearby Check</h1>
-    <p class="intro">See whether you’re within 30 meters of the saved location.</p>
+    <p class="intro">Choose a point on the map and set a radius for your geofence.</p>
 
-    <section class="target" aria-label="Target location">
-      <span class="target-label">Target location</span>
+    <section class="target" aria-label="Geofence settings">
+      <label class="target-label" for="radius">Geofence radius</label>
+      <div class="radius-control">
+        <input id="radius" type="range" min="10" max="1000" step="10" value="30">
+        <output id="radius-value" for="radius">30 m</output>
+      </div>
       <div class="coordinates">
-        <span>10.7207889, 123.8170935</span>
-        <a
-          class="map-link"
-          href="https://maps.google.com/?q=10.720788860167113,123.81709348927583"
-          target="_blank"
-          rel="noopener noreferrer"
-        >Open map ↗</a>
+        <span id="coordinates">10.720789, 123.817093</span>
+        <a class="map-link" id="map-link" href="https://maps.google.com/?q=10.720788860167113,123.81709348927583" target="_blank" rel="noopener noreferrer">Open map ↗</a>
       </div>
     </section>
 
-    <button id="check" type="button">Check my location</button>
+    <p class="map-hint">Tap or click the map to move the geofence center.</p>
+    <div id="map" role="application" aria-label="Map for choosing the geofence location"></div>
 
+    <button id="check" type="button">Check my location</button>
     <div id="result" role="status" aria-live="polite">
       Tap the button and allow location access when prompted.
     </div>
-
-    <p class="note">
-      Your location stays on this device. GPS can be imprecise, especially indoors; the result includes your device’s estimated accuracy.
-    </p>
+    <p class="note">Your location stays on this device. GPS can be imprecise, especially indoors; the result includes your device's estimated accuracy.</p>
   </main>
-
-  <script>
-    const TARGET_COORDS = { lat: 10.720788860167113, lon: 123.81709348927583 };
-    const RADIUS_METERS = 30;
-    const EARTH_RADIUS_METERS = 6371000;
-
-    const GEOLOCATION_OPTIONS = {
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 0,
-    };
-
-    const GEOLOCATION_ERROR_MESSAGES = {
-      1: 'Allow location access in your browser settings, then try again.',
-      2: 'Your device could not determine its location. Try somewhere with a clearer signal.',
-      3: 'Location took too long. Please try again.',
-    };
-
-    const button = document.querySelector('#check');
-    const result = document.querySelector('#result');
-
-    /** Convert an angle from degrees to radians. */
-    function toRadians(degrees) {
-      return (degrees * Math.PI) / 180;
-    }
-
-    /** Calculate great-circle distance in meters using the haversine formula. */
-    function getDistanceInMeters(pointA, pointB) {
-      const deltaLat = toRadians(pointB.lat - pointA.lat);
-      const deltaLon = toRadians(pointB.lon - pointA.lon);
-      const lat1 = toRadians(pointA.lat);
-      const lat2 = toRadians(pointB.lat);
-
-      const haversine =
-        Math.sin(deltaLat / 2) ** 2 +
-        Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) ** 2;
-
-      return EARTH_RADIUS_METERS * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
-    }
-
-    /** Determine whether the user is near, far, or uncertain given GPS accuracy. */
-    function getProximityStatus(distance, accuracy) {
-      const minDistance = Math.max(0, distance - accuracy);
-      const maxDistance = distance + accuracy;
-
-      if (maxDistance <= RADIUS_METERS) {
-        return 'near';
-      }
-      if (minDistance > RADIUS_METERS) {
-        return 'far';
-      }
-      return 'uncertain';
-    }
-
-    /** Render a titled status message inside the result container. */
-    function renderResult(title, detail, statusClass = '') {
-      const heading = document.createElement('strong');
-      heading.textContent = title;
-
-      const description = document.createElement('span');
-      description.textContent = detail;
-
-      result.className = statusClass;
-      result.replaceChildren(heading, description);
-    }
-
-    /** Update the check button's disabled state and label. */
-    function setButtonState(isLoading, label) {
-      button.disabled = isLoading;
-      button.textContent = label;
-    }
-
-    function handleLocationSuccess({ coords }) {
-      const userCoords = { lat: coords.latitude, lon: coords.longitude };
-      const distance = getDistanceInMeters(userCoords, TARGET_COORDS);
-      const accuracy = coords.accuracy;
-      const status = getProximityStatus(distance, accuracy);
-
-      const roundedDistance = Math.round(distance);
-      const roundedAccuracy = Math.round(accuracy);
-      const distanceDetail = `About ${roundedDistance} m away. GPS accuracy: ±${roundedAccuracy} m.`;
-
-      const statusContent = {
-        near: {
-          title: `You’re within the ${RADIUS_METERS} m radius`,
-          detail: distanceDetail,
-        },
-        far: {
-          title: `You’re outside the ${RADIUS_METERS} m radius`,
-          detail: distanceDetail,
-        },
-        uncertain: {
-          title: 'Location is too uncertain',
-          detail: `About ${roundedDistance} m away, with ±${roundedAccuracy} m accuracy. Move outdoors or closer, then check again.`,
-        },
-      };
-
-      const { title, detail } = statusContent[status];
-      renderResult(title, detail, status);
-      setButtonState(false, 'Check again');
-    }
-
-    function handleLocationError(error) {
-      const fallbackMessage = 'Please check your browser settings and try again.';
-      const message = GEOLOCATION_ERROR_MESSAGES[error.code] || fallbackMessage;
-
-      renderResult('Couldn’t check location', message);
-      setButtonState(false, 'Try again');
-    }
-
-    function checkLocation() {
-      result.className = '';
-
-      if (!navigator.geolocation) {
-        renderResult('Location unavailable', 'This browser does not support location checks.');
-        return;
-      }
-
-      setButtonState(true, 'Checking…');
-      result.textContent = 'Waiting for your location…';
-
-      navigator.geolocation.getCurrentPosition(
-        handleLocationSuccess,
-        handleLocationError,
-        GEOLOCATION_OPTIONS
-      );
-    }
-
-    button.addEventListener('click', checkLocation);
-  </script>
+  <script type="module" src="script/script.js"></script>
 </body>
 </html>
